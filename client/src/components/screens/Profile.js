@@ -4,6 +4,9 @@ import {UserContext} from '../../App'
 const Profile = ()=>{
     const [mypics,setPics] = useState([])
     const {state, dispatch} = useContext(UserContext)
+    const [image,setImage] = useState("")
+    const [url,setUrl] = useState("")
+
     useEffect(()=>{
         fetch('/mypost',{
             headers:{
@@ -14,8 +17,53 @@ const Profile = ()=>{
             setPics(result.mypost)
         })
     },[])
+    useEffect(()=>{
+        if(image){
+            const data = new FormData()
+            data.append("file", image)
+            data.append("upload_preset", "img-cloud")//this is the name of our upload preset on cloudinary
+            data.append("cloud_name", "insta-clone-cloud")
+            fetch("https://api.cloudinary.com/v1_1/insta-clone-cloud/image/upload",{
+                method:"post",
+                body:data
+            })
+            .then(res=>res.json())
+            .then(data=>{
+                
+               // localStorage.setItem("user",JSON.stringify({...state,pic:data.url}))
+                //dispatch({type:"UPDATEPIC",payload:data.url})
+                fetch('/updatepic',{
+                    method:"put",
+                    headers:{
+                        "Content-Type":"application/json",
+                        "Authorization":"Bearer "+localStorage.getItem("jwt")
+                    },
+                    body:JSON.stringify({
+                        pic:data.url
+                    })
+                
+                }).then(res=>res.json())
+                .then(data=>{
+                    setUrl(data.url)
+                    console.log(data)
+                    localStorage.setItem("user",JSON.stringify({...state,pic:data.url}))
+                    dispatch({type:"UPDATEPIC",payload:data.url})
+                })
+               
+            })
+            .catch(err=>{
+                console.log(err)
+            })
+        }
+    },[image])
+    const updatePhoto = (file)=>{
+        setImage(file)
+    }
     return(
         <div style={{maxWidth:"550px",margin:"0px auto"}}>
+        <div >
+        
+     
             <div style={{
                 display:"flex",
                 justifyContent:"space-around",
@@ -24,17 +72,20 @@ const Profile = ()=>{
             }}>
                 <div>
                     <img style = {{width:"160px",height:"160px",borderRadius:"80px"}}
-                    src="https://images.unsplash.com/photo-1592821166384-8130a978709c?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxzZWFyY2h8MTM3fHxwZXJzb258ZW58MHwyfDB8&auto=format&fit=crop&w=600&q=60"/>
+                    src={state?state.pic:"loading"}/>
+
                 </div>
                 <div>
                     <h4>{state?state.name:"loading"}</h4>
+                    <h5>{state?state.email:"loading"}</h5>
                     <div style={{display:"flex",
                     justifyContent:"space-between",
                     width:"108%",
                     }}>
-                        <h6>40 posts</h6>
-                        <h6>40 followers</h6>
-                        <h6>40 following</h6>
+                        <h6>{mypics.length} posts</h6>
+                        <h6>{state?state.followers.length:"0"} followers</h6>
+                        <h6>{state?state.following.length:"0"} following</h6>
+                        </div>
                     </div>
                 </div>
             </div>

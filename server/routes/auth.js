@@ -10,7 +10,7 @@ const requireLogin = require('../middleware/requireLogin')
 
 
 router.post('/signup', (req, res) => {
-    const { name, email, password } = req.body
+    const { name, email, password,pic } = req.body
     if (!email || !password || !name) {
         return res.status(422).json({ error: "Please fill in all the fields." })
             //the status code 200 means the request has succeeded, but since there is an error, 
@@ -26,7 +26,8 @@ router.post('/signup', (req, res) => {
                     const user = new User({
                         email,
                         password: hashedpassword,
-                        name
+                        name,
+                        pic
                     })
 
                     user.save()
@@ -60,8 +61,8 @@ router.post('/signin', (req, res) => {
                     if (doMatch) {
                         //res.json({ message: "Successfully signed in!" })
                         const token = jwt.sign({ _id: savedUser._id }, JWT_SECRET)
-                        const {_id, name, email} = savedUser
-                        res.json({ token, user:{_id, name, email} })
+                        const {_id, name, email,followers,following,pic} = savedUser
+                        res.json({ token, user:{_id, name, email,followers,following,pic} })
                     } else {
                         return res.status(422).json({ error: "Invalid email id or password" })
                     }
